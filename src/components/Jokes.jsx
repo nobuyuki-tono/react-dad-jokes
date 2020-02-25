@@ -23,7 +23,7 @@ class Jokes extends Component {
         headers: { Accept: "application/json" }
       });
 
-      jokes.push(res.data.joke);
+      jokes.push({ joke: res.data.joke, votes: 0 });
     }
 
     console.log(jokes);
@@ -46,7 +46,9 @@ class Jokes extends Component {
 
         <div className="jokes-joke">
           {this.state.jokes.map(joke => (
-            <p>{joke}</p>
+            <div>
+              {joke.joke} - {joke.votes}
+            </div>
           ))}
         </div>
       </div>
