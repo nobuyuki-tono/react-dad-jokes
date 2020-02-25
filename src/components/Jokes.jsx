@@ -15,11 +15,18 @@ class Jokes extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      jokes: []
+      jokes: JSON.parse(localStorage.getItem("jokes") || "[]"),
+      loading: false
     };
+    this.handleClick = this.handleClick.bind(this);
   }
 
-  async componentDidMount() {
+  componentDidMount() {
+    if (this.state.jokes.length === 0) {
+      this.getJokes();
+    }
+  }
+  async getJokes() {
     let jokes = [];
     while (jokes.length < this.props.numJokesToGet) {
       let res = await axios.get("https://icanhazdadjoke.com/", {
@@ -29,19 +36,40 @@ class Jokes extends Component {
       jokes.push({ id: uuid(), text: res.data.joke, votes: 0 });
     }
 
-    console.log(jokes);
-    this.setState({ jokes: jokes });
+    this.setState(
+      st => ({
+        loading: false,
+        jokes: [...st.jokes, ...jokes]
+      }),
+      () => localStorage.setItem("jokes", JSON.stringify(this.state.jokes))
+    );
   }
 
-  handleNumber(id, delta) {
-    this.setState(st => ({
-      jokes: st.jokes.map(joke =>
-        joke.id === id ? { ...joke, vottes: +delta } : joke
-      )
-    }));
+  handleVote(id, delta) {
+    this.setState(
+      st => ({
+        jokes: st.jokes.map(joke =>
+          joke.id === id ? { ...joke, votes: joke.votes + delta } : joke
+        )
+      }),
+      () => localStorage.setItem("jokes", JSON.stringify(this.state.jokes))
+    );
+  }
+
+  handleClick() {
+    this.setState({ loading: true }, this.getJokes);
   }
 
   render() {
+    if (this.state.loading) {
+      return (
+        <div className="jokes-spiner">
+          <i className="far fa-8x fa-laugh fa-spin"></i>
+          <h1 className="jokes-title">Loading...</h1>
+        </div>
+      );
+    }
+
     return (
       <div className="jokes">
         <div className="jokes-sidebar">
@@ -52,7 +80,9 @@ class Jokes extends Component {
             src="https://assets.dryicons.com/uploads/icon/svg/8927/0eb14c71-38f2-433a-bfc8-23d9c99b3647.svg"
             alt=""
           />
-          <button className="jokes-getMore-btn">New Jokes</button>
+          <button onClick={this.handleClick} className="jokes-getMore-btn">
+            New Jokes
+          </button>
         </div>
 
         <div className="jokes-joke">
@@ -61,8 +91,8 @@ class Jokes extends Component {
               key={joke.id}
               text={joke.text}
               votes={joke.votes}
-              upvote={() => this.handleNumber(joke.id, 1)}
-              downvote={() => this.handleNumber(joke.id, -1)}
+              upvote={() => this.handleVote(joke.id, 1)}
+              downvote={() => this.handleVote(joke.id, -1)}
             />
           ))}
         </div>

@@ -42,3 +42,8 @@
   width: 70%;
   overflow: scroll;
 }
+
+.jokes-spiner {
+  color: #fff;
+  text-align: center;
+}
